@@ -1,58 +1,140 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="robots" content="noindex,nofollow">
-<title>音楽制作ポートフォリオ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body {
-  margin: 0;
-  padding: 40px 20px;
-  background: #000;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-}
+  <!-- Googleなどの検索結果に出さない -->
+  <meta name="robots" content="noindex,nofollow">
 
-main {
-  max-width: 600px;
-  margin: auto;
-}
+  <title>音楽制作ポートフォリオ</title>
 
-h1 {
-  font-size: 20px;
-  text-align: center;
-  margin-bottom: 60px;
-}
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-.track {
-  margin-bottom: 35px;
-}
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+                   "Hiragino Kaku Gothic ProN", sans-serif;
+    }
 
-.track-name {
-  font-size: 16px;
-  margin-bottom: 10px;
-}
+    main {
+      width: min(92%, 600px);
+      margin: 0 auto;
+      padding: 70px 0 100px;
+    }
 
-audio {
-  width: 100%;
-}
-</style>
+    h1 {
+      margin: 0 0 60px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+
+    .track {
+      margin-bottom: 38px;
+    }
+
+    .track-name {
+      margin-bottom: 10px;
+      font-size: 16px;
+      word-break: break-word;
+    }
+
+    audio {
+      display: block;
+      width: 100%;
+    }
+
+    #loading {
+      text-align: center;
+      opacity: 0.6;
+      font-size: 14px;
+    }
+  </style>
 </head>
 
 <body>
+
 <main>
 
-<h1>音楽制作ポートフォリオ</h1>
+  <h1>音楽制作ポートフォリオ</h1>
 
-<div class="track">
-  <div class="track-name">曲名01</div>
-  <audio controls preload="none">
-    <source src="song01.mp3" type="audio/mpeg">
-  </audio>
-</div>
+  <div id="loading">読み込み中...</div>
+  <div id="tracks"></div>
 
 </main>
+
+<script>
+  const owner = "btkrb9dgnk-stack";
+  const repo = "music-portfolio";
+
+  async function loadTracks() {
+
+    const tracks = document.getElementById("tracks");
+    const loading = document.getElementById("loading");
+
+    try {
+
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/contents/`
+      );
+
+      if (!response.ok) {
+        throw new Error("読み込みに失敗しました");
+      }
+
+      const files = await response.json();
+
+      const mp3Files = files
+        .filter(file =>
+          file.type === "file" &&
+          file.name.toLowerCase().endsWith(".mp3")
+        )
+        .sort((a, b) =>
+          a.name.localeCompare(b.name, "ja", {
+            numeric: true
+          })
+        );
+
+      loading.remove();
+
+      mp3Files.forEach(file => {
+
+        const track = document.createElement("div");
+        track.className = "track";
+
+        const name = document.createElement("div");
+        name.className = "track-name";
+
+        /* .mp3だけ消して曲名として表示 */
+        name.textContent = file.name.replace(/\.mp3$/i, "");
+
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        audio.preload = "none";
+        audio.src = file.download_url;
+
+        track.appendChild(name);
+        track.appendChild(audio);
+        tracks.appendChild(track);
+
+      });
+
+    } catch (error) {
+
+      loading.textContent = "楽曲を読み込めませんでした。";
+
+    }
+  }
+
+  loadTracks();
+</script>
+
 </body>
 </html>
